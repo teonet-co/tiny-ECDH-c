@@ -1,3 +1,4 @@
+// clang-format off
 /* 
 
   Crypto using elliptic curves defined over the finite binary field GF(2^m) where m is prime.
@@ -974,3 +975,4 @@ int ecdsa_verify(const uint8_t* public_key, uint8_t* hash, const uint8_t* signat
 
 
 
+// clang-format on
