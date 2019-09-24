@@ -728,30 +728,27 @@ static int gf2point_on_curve(const gf2elem_t x, const gf2elem_t y)
 /* NOTE: private should contain random data a-priori! */
 int ecdh_generate_keys(uint8_t* public_key, uint8_t* private_key)
 {
+  /* Abort key generation if random number is too small */
+  if (bitvec_degree((uint32_t*)private_key) < (CURVE_DEGREE / 2)) {
+    return 0;
+  }
+
   /* Get copy of "base" point 'G' */
   gf2point_copy((uint32_t*)public_key, (uint32_t*)(public_key + BITVEC_NBYTES), base_x, base_y);
 
-  /* Abort key generation if random number is too small */
-  if (bitvec_degree((uint32_t*)private_key) < (CURVE_DEGREE / 2))
+  /* Clear bits > CURVE_DEGREE in highest word to satisfy constraint 1 <= exp < n. */
+  int nbits = bitvec_degree(base_order);
+  int i;
+
+  for (i = (nbits - 1); i < (BITVEC_NWORDS * 32); ++i)
   {
-    return 0;
+    bitvec_clr_bit((uint32_t*)private_key, i);
   }
-  else
-  {
-    /* Clear bits > CURVE_DEGREE in highest word to satisfy constraint 1 <= exp < n. */
-    int nbits = bitvec_degree(base_order);
-    int i;
 
-    for (i = (nbits - 1); i < (BITVEC_NWORDS * 32); ++i)
-    {
-      bitvec_clr_bit((uint32_t*)private_key, i);
-    }
+  /* Multiply base-point with scalar (private-key) */
+  gf2point_mul((uint32_t*)public_key, (uint32_t*)(public_key + BITVEC_NBYTES), (uint32_t*)private_key);
 
-    /* Multiply base-point with scalar (private-key) */
-    gf2point_mul((uint32_t*)public_key, (uint32_t*)(public_key + BITVEC_NBYTES), (uint32_t*)private_key);
-
-    return 1;
-  }
+  return 1;
 }
 
 
